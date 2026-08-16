@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Reparto Partidos Deportivo 2026/27</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --nico-color: #2563eb;
+            --nico-light: #dbeafe;
+            --marcos-color: #dc2626;
+            --marcos-light: #fee2e2;
+            --unassigned-color: #6b7280;
+            --unassigned-light: #f3f4f6;
+            --bg-color: #f0f2f5;
+            --card-bg: #ffffff;
+            --text-primary: #1f2937;
+            --text-secondary: #6b7280;
+            --shadow: 0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06);
+            --shadow-hover: 0 4px 6px rgba(0,0,0,0.1), 0 2px 4px rgba(0,0,0,0.06);
+            --radius: 12px;
+            --radius-sm: 8px;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: var(--bg-color);
+            color: var(--text-primary);
+            min-height: 100vh;
+            padding: 16px;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .header h1 {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+
+        .header p {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .actions {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-width: 340px;
+            margin: 0 auto 20px;
+        }
+
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 12px 20px;
+            border: none;
+            border-radius: var(--radius);
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: var(--shadow);
+            text-align: center;
+        }
+
+        .btn-share {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+        }
+
+        .btn-share:active {
+            transform: scale(0.97);
+        }
+
+        .btn-share.copied {
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+        }
+
+        .btn-reset {
+            background: var(--text-primary);
+            color: white;
+        }
+
+        .btn-reset:active {
+            transform: scale(0.97);
+        }
+
+        .share-hint {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-align: center;
+            margin-top: -6px;
+            margin-bottom: 8px;
+        }
+
+        .columns {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        @media (min-width: 900px) {
+            .columns {
+                flex-direction: row;
+                max-width: 1200px;
+                align-items: flex-start;
+            }
+            .column {
+                flex: 1;
+                min-width: 0;
+            }
+        }
+
+        .column {
+            background: rgba(255,255,255,0.6);
+            border-radius: var(--radius);
+            padding: 14px;
+            min-height: 120px;
+            transition: background 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .column.drag-over {
+            background: rgba(255,255,255,0.95);
+            box-shadow: 0 0 0 2px var(--unassigned-color);
+        }
+
+        .column.nico-column.drag-over {
+            box-shadow: 0 0 0 2px var(--nico-color);
+        }
+
+        .column.marcos-column.drag-over {
+            box-shadow: 0 0 0 2px var(--marcos-color);
+        }
+
+        .column-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid;
+        }
+
+        .nico-column .column-header {
+            border-color: var(--nico-color);
+        }
+
+        .marcos-column .column-header {
+            border-color: var(--marcos-color);
+        }
+
+        .unassigned-column .column-header {
+            border-color: var(--unassigned-color);
+        }
+
+        .column-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+
+        .column-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .nico-column .column-dot { background: var(--nico-color); }
+        .marcos-column .column-dot { background: var(--marcos-color); }
+        .unassigned-column .column-dot { background: var(--unassigned-color); }
+
+        .counter {
+            font-size: 0.85rem;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 20px;
+            background: var(--unassigned-light);
+            color: var(--unassigned-color);
+            min-width: 32px;
+            text-align: center;
+        }
+
+        .nico-column .counter {
+            background: var(--nico-light);
+            color: var(--nico-color);
+        }
+
+        .marcos-column .counter {
+            background: var(--marcos-light);
+            color: var(--marcos-color);
+        }
+
+        .cards-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            min-height: 60px;
+        }
+
+        .match-card {
+            background: var(--card-bg);
+            border-radius: var(--radius-sm);
+            padding: 14px;
+            box-shadow: var(--shadow);
+            cursor: grab;
+            transition: all 0.2s ease;
+            position: relative;
+            user-select: none;
+            touch-action: manipulation;
+        }
+
+        .match-card:active {
+            cursor: grabbing;
+        }
+
+        .match-card.dragging {
+            opacity: 0.5;
+            transform: scale(0.98);
+        }
+
+        .match-card.fixed {
+            cursor: default;
+            border-left: 4px solid var(--unassigned-color);
+        }
+
+        .nico-column .match-card.fixed {
+            border-left-color: var(--nico-color);
+        }
+
+        .marcos-column .match-card.fixed {
+            border-left-color: var(--marcos-color);
+        }
+
+        .match-card:hover:not(.fixed) {
+            box-shadow: var(--shadow-hover);
+            transform: translateY(-1px);
+        }
+
+        .match-card.moving {
+            animation: cardMove 0.25s ease;
+        }
+
+        @keyframes cardMove {
+            0% { transform: scale(0.95); opacity: 0.7; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .match-number {
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 2px;
+        }
+
+        .match-rival {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+
+        .match-date {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        .fixed-badge {
+            display: inline-block;
+            font-size: 0.65rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 2px 8px;
+            border-radius: 4px;
+            margin-top: 6px;
+            background: var(--unassigned-light);
+            color: var(--unassigned-color);
+        }
+
+        .nico-column .fixed-badge {
+            background: var(--nico-light);
+            color: var(--nico-color);
+        }
+
+        .marcos-column .fixed-badge {
+            background: var(--marcos-light);
+            color: var(--marcos-color);
+        }
+
+        /* Mobile selection overlay */
+        .selection-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+
+        .selection-overlay.active {
+            display: flex;
+        }
+
+        .selection-dialog {
+            background: white;
+            border-radius: var(--radius);
+            padding: 24px;
+            width: 100%;
+            max-width: 320px;
+            box-shadow: 0 20px 25px rgba(0,0,0,0.15);
+            animation: dialogIn 0.2s ease;
+        }
+
+        @keyframes dialogIn {
+            from { transform: scale(0.9); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .selection-dialog h3 {
+            font-size: 1rem;
+            margin-bottom: 4px;
+            text-align: center;
+        }
+
+        .selection-dialog .dialog-subtitle {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .selection-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .sel-btn {
+            padding: 14px;
+            border: 2px solid;
+            border-radius: var(--radius-sm);
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            text-align: center;
+        }
+
+        .sel-btn-nico {
+            border-color: var(--nico-color);
+            color: var(--nico-color);
+            background: var(--nico-light);
+        }
+
+        .sel-btn-nico:active {
+            background: var(--nico-color);
+            color: white;
+        }
+
+        .sel-btn-marcos {
+            border-color: var(--marcos-color);
+            color: var(--marcos-color);
+            background: var(--marcos-light);
+        }
+
+        .sel-btn-marcos:active {
+            background: var(--marcos-color);
+            color: white;
+        }
+
+        .sel-btn-unassigned {
+            border-color: var(--unassigned-color);
+            color: var(--unassigned-color);
+            background: var(--unassigned-light);
+        }
+
+        .sel-btn-unassigned:active {
+            background: var(--unassigned-color);
+            color: white;
+        }
+
+        .sel-btn-cancel {
+            border-color: #d1d5db;
+            color: var(--text-secondary);
+            background: white;
+            margin-top: 6px;
+        }
+
+        .sel-btn-cancel:active {
+            background: #f3f4f6;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 20px;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            font-style: italic;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: #1f2937;
+            color: white;
+            padding: 12px 24px;
+            border-radius: var(--radius);
+            font-size: 0.9rem;
+            font-weight: 600;
+            box-shadow: 0 10px 15px rgba(0,0,0,0.2);
+            opacity: 0;
+            transition: all 0.3s ease;
+            z-index: 2000;
+            white-space: nowrap;
+        }
+
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🎯 Reparto Partidos Deportivo</h1>
+        <p>Temporada 2026/27 — Partidos de local</p>
+    </div>
+
+    <div class="actions">
+        <button class="btn btn-share" id="shareBtn" onclick="copyShareLink()">📋 Copiar enlace para compartir</button>
+        <p class="share-hint">Comparte el enlace y la otra persona verá exactamente tu reparto</p>
+    </div>
+
+    <div class="columns">
+        <div class="column nico-column" data-group="nico" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event, 'nico')">
+            <div class="column-header">
+                <div class="column-title">
+                    <span class="column-dot"></span>
+                    🔵 Nico
+                </div>
+                <span class="counter" id="count-nico">0</span>
+            </div>
+            <div class="cards-list" id="list-nico"></div>
+        </div>
+
+        <div class="column marcos-column" data-group="marcos" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event, 'marcos')">
+            <div class="column-header">
+                <div class="column-title">
+                    <span class="column-dot"></span>
+                    🔴 Marcos
+                </div>
+                <span class="counter" id="count-marcos">0</span>
+            </div>
+            <div class="cards-list" id="list-marcos"></div>
+        </div>
+
+        <div class="column unassigned-column" data-group="unassigned" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event, 'unassigned')">
+            <div class="column-header">
+                <div class="column-title">
+                    <span class="column-dot"></span>
+                    ⚪ Sin asignar
+                </div>
+                <span class="counter" id="count-unassigned">0</span>
+            </div>
+            <div class="cards-list" id="list-unassigned"></div>
+        </div>
+    </div>
+
+    <!-- Mobile selection overlay -->
+    <div class="selection-overlay" id="selectionOverlay" onclick="closeSelection(event)">
+        <div class="selection-dialog" onclick="event.stopPropagation()">
+            <h3 id="selTitle">Mover partido</h3>
+            <p class="dialog-subtitle" id="selSubtitle"></p>
+            <div class="selection-buttons">
+                <button class="sel-btn sel-btn-nico" onclick="confirmMove('nico')">🔵 Nico</button>
+                <button class="sel-btn sel-btn-marcos" onclick="confirmMove('marcos')">🔴 Marcos</button>
+                <button class="sel-btn sel-btn-unassigned" onclick="confirmMove('unassigned')">⚪ Sin asignar</button>
+                <button class="sel-btn sel-btn-cancel" onclick="closeSelection()">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        // ===================== DATA =====================
+        const INITIAL_MATCHES = [
+            { id: 1,  fecha: "17/08/2026", rival: "Elche",           asignacion: "unassigned", fijo: false },
+            { id: 2,  fecha: "30/08/2026", rival: "Valencia",        asignacion: "unassigned", fijo: false },
+            { id: 3,  fecha: "16/09/2026", rival: "Sevilla",         asignacion: "unassigned", fijo: false },
+            { id: 4,  fecha: "20/09/2026", rival: "Real Betis",      asignacion: "unassigned", fijo: false },
+            { id: 5,  fecha: "18/10/2026", rival: "Levante",         asignacion: "unassigned", fijo: false },
+            { id: 6,  fecha: "01/11/2026", rival: "Osasuna",         asignacion: "unassigned", fijo: false },
+            { id: 7,  fecha: "29/11/2026", rival: "Barcelona FC",    asignacion: "nico",       fijo: true  },
+            { id: 8,  fecha: "13/12/2026", rival: "Athletic Club",   asignacion: "unassigned", fijo: false },
+            { id: 9,  fecha: "20/12/2026", rival: "Real Madrid",     asignacion: "marcos",     fijo: true  },
+            { id: 10, fecha: "10/01/2027", rival: "Rayo Vallecano",  asignacion: "unassigned", fijo: false },
+            { id: 11, fecha: "24/01/2027", rival: "Atlético de Madrid", asignacion: "unassigned", fijo: false },
+            { id: 12, fecha: "07/02/2027", rival: "Málaga",          asignacion: "unassigned", fijo: false },
+            { id: 13, fecha: "21/02/2027", rival: "Real Sociedad",   asignacion: "unassigned", fijo: false },
+            { id: 14, fecha: "07/03/2027", rival: "Getafe",          asignacion: "unassigned", fijo: false },
+            { id: 15, fecha: "04/04/2027", rival: "Villarreal",      asignacion: "unassigned", fijo: false },
+            { id: 16, fecha: "18/04/2027", rival: "Celta de Vigo",   asignacion: "marcos",     fijo: true  },
+            { id: 17, fecha: "02/05/2027", rival: "Racing",          asignacion: "unassigned", fijo: false },
+            { id: 18, fecha: "16/05/2027", rival: "Alavés",          asignacion: "unassigned", fijo: false },
+            { id: 19, fecha: "23/05/2027", rival: "Espanyol",        asignacion: "unassigned", fijo: false },
+        ];
+
+        const STORAGE_KEY = 'depor_reparto_2026_27';
+        const CHAR_MAP = { nico: 'n', marcos: 'm', unassigned: 'u' };
+        const REV_MAP = { n: 'nico', m: 'marcos', u: 'unassigned' };
+
+        let matches = [];
+        let selectedMatchId = null;
+        let dragSrcEl = null;
+
+        // ===================== STATE ENCODING =====================
+        function encodeState() {
+            // 19 chars, one per match id 1-19
+            let s = '';
+            for (let i = 1; i <= 19; i++) {
+                const m = matches.find(x => x.id === i);
+                s += CHAR_MAP[m.asignacion] || 'u';
+            }
+            return s;
+        }
+
+        function decodeState(str) {
+            if (!str || str.length !== 19) return null;
+            const arr = [];
+            for (let i = 0; i < 19; i++) {
+                const ch = str[i];
+                const group = REV_MAP[ch];
+                if (!group) return null;
+                arr.push({ id: i + 1, asignacion: group });
+            }
+            return arr;
+        }
+
+        function updateUrl() {
+            const hash = encodeState();
+            history.replaceState(null, '', '#state=' + hash);
+        }
+
+        function getUrlState() {
+            const hash = location.hash;
+            if (!hash) return null;
+            const match = hash.match(/state=([num]{19})/);
+            if (!match) return null;
+            return decodeState(match[1]);
+        }
+
+        // ===================== INIT =====================
+        function init() {
+            loadState();
+            renderAll();
+        }
+
+        function loadState() {
+            // 1. Try URL hash first (shareable link)
+            const urlState = getUrlState();
+            if (urlState) {
+                matches = JSON.parse(JSON.stringify(INITIAL_MATCHES));
+                urlState.forEach(u => {
+                    const m = matches.find(x => x.id === u.id);
+                    if (m && !m.fijo) {
+                        m.asignacion = u.asignacion;
+                    }
+                });
+                // Also save to localStorage for convenience
+                try { localStorage.setItem(STORAGE_KEY, JSON.stringify(matches)); } catch(e){}
+                return;
+            }
+
+            // 2. Try localStorage
+            try {
+                const saved = localStorage.getItem(STORAGE_KEY);
+                if (saved) {
+                    matches = JSON.parse(saved);
+                    if (matches.length !== 19) throw new Error('Invalid count');
+                } else {
+                    matches = JSON.parse(JSON.stringify(INITIAL_MATCHES));
+                }
+            } catch (e) {
+                matches = JSON.parse(JSON.stringify(INITIAL_MATCHES));
+            }
+
+            // Enforce fixed matches
+            matches.forEach(m => {
+                if (m.id === 7)  { m.asignacion = 'nico'; m.fijo = true; }
+                if (m.id === 9)  { m.asignacion = 'marcos'; m.fijo = true; }
+                if (m.id === 16) { m.asignacion = 'marcos'; m.fijo = true; }
+            });
+        }
+
+        function saveState() {
+            try { localStorage.setItem(STORAGE_KEY, JSON.stringify(matches)); } catch(e){}
+            updateUrl();
+        }
+
+        // ===================== RENDER =====================
+        function renderAll() {
+            renderGroup('nico');
+            renderGroup('marcos');
+            renderGroup('unassigned');
+            updateCounters();
+        }
+
+        function renderGroup(group) {
+            const container = document.getElementById('list-' + group);
+            const groupMatches = matches
+                .filter(m => m.asignacion === group)
+                .sort((a, b) => a.id - b.id);
+
+            if (groupMatches.length === 0) {
+                container.innerHTML = '<div class="empty-state">Sin partidos</div>';
+                return;
+            }
+
+            container.innerHTML = groupMatches.map(m => createCardHTML(m)).join('');
+
+            groupMatches.forEach(m => {
+                const el = document.getElementById('card-' + m.id);
+                if (!m.fijo) {
+                    el.draggable = true;
+                    el.addEventListener('dragstart', handleDragStart);
+                    el.addEventListener('dragend', handleDragEnd);
+                    el.addEventListener('touchstart', handleTouchStart, { passive: true });
+                    el.addEventListener('click', handleCardClick);
+                }
+            });
+        }
+
+        function createCardHTML(m) {
+            const fixedBadge = m.fijo ? '<div class="fixed-badge">FIJO</div>' : '';
+            return `
+                <div class="match-card ${m.fijo ? 'fixed' : ''}" id="card-${m.id}" data-id="${m.id}">
+                    <div class="match-number">Partido ${m.id}</div>
+                    <div class="match-rival">${escapeHtml(m.rival)}</div>
+                    <div class="match-date">${m.fecha}</div>
+                    ${fixedBadge}
+                </div>
+            `;
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function updateCounters() {
+            ['nico', 'marcos', 'unassigned'].forEach(group => {
+                const count = matches.filter(m => m.asignacion === group).length;
+                document.getElementById('count-' + group).textContent = count;
+            });
+        }
+
+        // ===================== DRAG & DROP =====================
+        function handleDragStart(e) {
+            dragSrcEl = e.target;
+            e.target.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/plain', e.target.dataset.id);
+        }
+
+        function handleDragEnd(e) {
+            e.target.classList.remove('dragging');
+            document.querySelectorAll('.column').forEach(col => col.classList.remove('drag-over'));
+            dragSrcEl = null;
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            e.currentTarget.classList.add('drag-over');
+        }
+
+        function handleDragLeave(e) {
+            if (e.currentTarget.contains(e.relatedTarget)) return;
+            e.currentTarget.classList.remove('drag-over');
+        }
+
+        function handleDrop(e, group) {
+            e.preventDefault();
+            e.currentTarget.classList.remove('drag-over');
+            const matchId = parseInt(e.dataTransfer.getData('text/plain'), 10);
+            moveMatch(matchId, group);
+        }
+
+        // ===================== TOUCH / CLICK =====================
+        let touchStartTime = 0;
+        let touchMoved = false;
+
+        function handleTouchStart(e) {
+            touchStartTime = Date.now();
+            touchMoved = false;
+        }
+
+        function handleCardClick(e) {
+            if (touchMoved) return;
+            const elapsed = Date.now() - touchStartTime;
+            if (elapsed > 300) return;
+
+            const card = e.currentTarget;
+            const matchId = parseInt(card.dataset.id, 10);
+            const match = matches.find(m => m.id === matchId);
+            if (!match || match.fijo) return;
+
+            openSelection(match);
+        }
+
+        // ===================== SELECTION DIALOG =====================
+        function openSelection(match) {
+            selectedMatchId = match.id;
+            document.getElementById('selTitle').textContent = `Partido ${match.id} — ${match.rival}`;
+            document.getElementById('selSubtitle').textContent = `Fecha: ${match.fecha}`;
+            document.getElementById('selectionOverlay').classList.add('active');
+        }
+
+        function closeSelection(e) {
+            if (e && e.target !== e.currentTarget) return;
+            document.getElementById('selectionOverlay').classList.remove('active');
+            selectedMatchId = null;
+        }
+
+        function confirmMove(group) {
+            if (selectedMatchId !== null) {
+                moveMatch(selectedMatchId, group);
+            }
+            closeSelection();
+        }
+
+        // ===================== MOVE =====================
+        function moveMatch(matchId, newGroup) {
+            const match = matches.find(m => m.id === matchId);
+            if (!match || match.fijo || match.asignacion === newGroup) return;
+
+            match.asignacion = newGroup;
+            saveState();
+            renderAll();
+        }
+
+        // ===================== SHARE =====================
+        function copyShareLink() {
+            const url = window.location.href;
+            navigator.clipboard.writeText(url).then(() => {
+                showToast('✅ Enlace copiado al portapapeles');
+                const btn = document.getElementById('shareBtn');
+                const original = btn.textContent;
+                btn.textContent = '✅ Enlace copiado';
+                btn.classList.add('copied');
+                setTimeout(() => {
+                    btn.textContent = original;
+                    btn.classList.remove('copied');
+                }, 2000);
+            }).catch(() => {
+                showToast('⚠️ No se pudo copiar. Copia la URL manualmente.');
+            });
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            toast.textContent = msg;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2500);
+        }
+
+
+        // ===================== START =====================
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
